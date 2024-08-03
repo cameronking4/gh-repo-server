@@ -1,4 +1,4 @@
-import { Context } from "oak/mod.ts";
+export { Context } from "https://deno.land/x/oak@v10.0.0/mod.ts";
 import { queueGroupedJobs } from "../utils.ts";
 
 export async function queueRoute(context: Context) {

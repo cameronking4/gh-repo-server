@@ -1,5 +1,5 @@
-import { Context } from "oak/mod.ts";
-import { config } from "dotenv/mod.ts";
+export { Context } from "https://deno.land/x/oak@v10.0.0/mod.ts";
+import { config } from "https://deno.land/x/dotenv/mod.ts";
 import { getJobs, filterForStaleJobs, processJobs } from "../utils.ts";
 
 const env = config();
