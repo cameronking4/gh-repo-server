@@ -1,0 +1,64 @@
+
+openapi: 3.1.0
+info:
+  title: GitHub Repo Fetcher API
+  description: An API to fetch GitHub repository contents.
+  version: v1.0.0
+servers:
+  - url: https://gh-repo.deno.dev
+paths:
+  /get-repo:
+    get:
+      summary: Fetch GitHub repository contents
+      description: Fetch the contents of a GitHub repository specified by the owner and repo name.
+      operationId: fetchGithubRepo
+      parameters:
+        - name: repo
+          in: query
+          description: The owner and repository name in the format 'owner/repo'.
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    path:
+                      type: string
+                    content:
+                      type: string
+                      nullable: true
+        400:
+          description: Bad Request - Repository name is required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
