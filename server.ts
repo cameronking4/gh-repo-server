@@ -1,4 +1,4 @@
-import { Application } from "oak/mod.ts";
+export { Application } from "https://deno.land/x/oak@v10.0.0/mod.ts";
 import { config } from "https://deno.land/x/dotenv/mod.ts";
 import router from "./routes/index.ts";
 
