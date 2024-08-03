@@ -1,8 +1,11 @@
 # Fetch Github Repo for ChatGPT context
 Download the OpenAI yaml and add to your gpt or chat to begin fetching public Github repos. Clone this repo and self host using DenoDeploy to pull private Github repos using your PAT.
 
-## Deno Deploy Server
+## Demo
 
+https://github.com/user-attachments/assets/e6bc2ccb-7158-422a-98ae-3da3041b2533
+
+## Deno Deploy Server
 This Deno server application uses the Oak framework to create a simple API for fetching and displaying the contents of a GitHub repository. The API exposes an endpoint to retrieve the contents of a specified repository, including files and directories, but excludes certain file types (e.g., images and videos).
 
 ## Features
