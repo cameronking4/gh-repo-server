@@ -1,5 +1,14 @@
 {
-    "name": "deno-github-repo-json",
-    "entry": "server.ts"
-}
+    "tasks": {
+      "start": "deno run --allow-net --allow-read --allow-env main.ts"
+    },
+    "importMap": {
+      "imports": {
+        "oak/": "https://deno.land/x/oak@v10.6.0/",
+        "dotenv/": "https://deno.land/x/dotenv@v3.1.0/",
+        "uuid/": "https://deno.land/std@0.106.0/uuid/",
+        "postgres/": "https://deno.land/x/postgres@v0.8.0/mod.ts"
+      }
+    }
+  }
   
