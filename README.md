@@ -25,5 +25,5 @@ This Deno server application uses the Oak framework to create a simple API for f
 1. **Clone the repository:**
 
    ```sh
-   git clone <repository-url>
-   cd <repository-directory>
+   git clone https://github.com/cameronking4/gh-repo-server.git
+   cd gh-repo-server
