@@ -51,7 +51,7 @@ async function fetchRepoContents(contents: any[], headers: Headers): Promise<any
     if (shouldExclude(item)) {
       continue;
     }
-    if (item.type === "file" && !item.name.match(/\.(mp4|avi|mkv|jpg|jpeg|png|svg|gif|lock)$/)) {
+    if (item.type === "file" && !item.name.match(/\.(mp4|avi|mkv|jpg|jpeg|png|svg|gif|lock|ico)$/)) {
       const fileContent = await fetchFileContent(item.download_url, headers);
       data.push({ path: item.path, content: fileContent });
     } else if (item.type === "dir") {
