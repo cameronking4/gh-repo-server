@@ -1,4 +1,5 @@
 # Fetch Github Repo for ChatGPT context
+Download the OpenAI yaml and add to your gpt or chat to begin fetching public Github repos. Clone this repo and self host using DenoDeploy to pull private Github repos using your PAT.
 
 ## Deno Deploy Server
 
