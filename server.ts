@@ -1,5 +1,5 @@
 import { Application } from "oak/mod.ts";
-import { config } from "dotenv/mod.ts";
+import { config } from "https://deno.land/x/dotenv/mod.ts";
 import router from "./routes/index.ts";
 
 const env = config();
