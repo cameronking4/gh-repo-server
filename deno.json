@@ -1,8 +1,5 @@
 {
     "name": "deno-github-repo-json",
-    "entry": "server.ts",
-    "env": {
-      "GITHUB_PAT": //insert github personal access token here
-    }
+    "entry": "server.ts"
 }
   
