@@ -3,6 +3,10 @@ import { Application, Router } from "https://deno.land/x/oak/mod.ts";
 const GITHUB_PAT = Deno.env.get("GITHUB_PAT");
 
 const router = new Router();
+router.get("/", (context) => {
+  context.response.body = "Github Repo Fetcher";
+});
+
 router.get("/get-repo", async (context) => {
   const repoName = context.request.url.searchParams.get("repo");
   if (!repoName) {
@@ -44,7 +48,10 @@ await app.listen({ port: 8000 });
 async function fetchRepoContents(contents: any[], headers: Headers): Promise<any[]> {
   const data: any[] = [];
   for (const item of contents) {
-    if (item.type === "file" && !item.name.match(/\.(mp4|avi|mkv|jpg|jpeg|png|svg|gif)$/)) {
+    if (shouldExclude(item)) {
+      continue;
+    }
+    if (item.type === "file" && !item.name.match(/\.(mp4|avi|mkv|jpg|jpeg|png|svg|gif|lock)$/)) {
       const fileContent = await fetchFileContent(item.download_url, headers);
       data.push({ path: item.path, content: fileContent });
     } else if (item.type === "dir") {
@@ -63,4 +70,21 @@ async function fetchRepoContents(contents: any[], headers: Headers): Promise<any
 async function fetchFileContent(url: string, headers: Headers): Promise<string> {
   const response = await fetch(url, { headers });
   return await response.text();
+}
+
+function shouldExclude(item: any): boolean {
+  const excludedPatterns = [
+    "node_modules",
+    "vendor",
+    ".lock",
+    "yarn.lock",
+    "package-lock.json",
+    ".git",
+    "dist",
+    "build",
+    ".zip",
+    ".tar",
+    ".gz"
+  ];
+  return excludedPatterns.some(pattern => item.path.includes(pattern));
 }
