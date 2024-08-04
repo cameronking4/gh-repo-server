@@ -1,6 +1,75 @@
 import { Application, Router } from "https://deno.land/x/oak/mod.ts";
 
 const GITHUB_PAT = Deno.env.get("GITHUB_PAT");
+const CONCURRENCY_LIMIT = 5;
+
+// Function to check if an item should be excluded
+function shouldExclude(item: any): boolean {
+  const excludedPatterns = [
+    "node_modules",
+    "vendor",
+    ".lock",
+    "yarn.lock",
+    "package-lock.json",
+    ".git",
+    "dist",
+    "build",
+    ".zip",
+    ".tar",
+    ".gz"
+  ];
+  return excludedPatterns.some(pattern => item.path.includes(pattern));
+}
+
+// Function to fetch file content
+async function fetchFileContent(url: string, headers: Headers): Promise<string> {
+  const response = await fetch(url, { headers });
+  const size = response.headers.get("Content-Length");
+  if (size && parseInt(size, 10) > 50000) { // Limit to 50KB
+    return `File too large to fetch (${size} bytes)`;
+  }
+  return await response.text();
+}
+
+// Function to fetch repository contents
+async function fetchRepoContents(contents: any[], headers: Headers): Promise<any[]> {
+  const data: any[] = [];
+  const queue: Promise<any>[] = [];
+
+  for (const item of contents) {
+    if (shouldExclude(item)) {
+      continue;
+    }
+    if (queue.length >= CONCURRENCY_LIMIT) {
+      await Promise.race(queue);
+    }
+
+    const promise = (async () => {
+      if (item.type === "file" && !item.name.match(/\.(mp4|avi|mkv|jpg|jpeg|png|svg|gif|lock|ico)$/)) {
+        const fileContent = await fetchFileContent(item.download_url, headers);
+        data.push({ path: item.path, content: fileContent });
+      } else if (item.type === "dir") {
+        const dirContentUrl = item.url;
+        const dirContentResponse = await fetch(dirContentUrl, { headers });
+        const dirContentJson = await dirContentResponse.json();
+        const dirData = await fetchRepoContents(dirContentJson, headers);
+        data.push({ path: item.path, content: dirData });
+      } else if (item.type === "file") {
+        data.push({ path: item.path, content: null });
+      }
+    })();
+
+    queue.push(promise);
+    promise.then(() => {
+      queue.splice(queue.indexOf(promise), 1);
+    }).catch((error) => {
+      console.error(error);
+    });
+  }
+
+  await Promise.all(queue);
+  return data;
+}
 
 const router = new Router();
 router.get("/", (context) => {
@@ -19,6 +88,7 @@ router.get("/get-repo", async (context) => {
 
   const headers = new Headers();
   headers.append("Authorization", `token ${GITHUB_PAT}`);
+  headers.append("Accept", "application/vnd.github.v3+json");
 
   try {
     const repoContent = await fetch(repoContentUrl, { headers });
@@ -44,47 +114,3 @@ app.use(router.allowedMethods());
 
 console.log("Server is running on http://localhost:8000");
 await app.listen({ port: 8000 });
-
-async function fetchRepoContents(contents: any[], headers: Headers): Promise<any[]> {
-  const data: any[] = [];
-  for (const item of contents) {
-    if (shouldExclude(item)) {
-      continue;
-    }
-    if (item.type === "file" && !item.name.match(/\.(mp4|avi|mkv|jpg|jpeg|png|svg|gif|lock|ico)$/)) {
-      const fileContent = await fetchFileContent(item.download_url, headers);
-      data.push({ path: item.path, content: fileContent });
-    } else if (item.type === "dir") {
-      const dirContentUrl = item.url;
-      const dirContentResponse = await fetch(dirContentUrl, { headers });
-      const dirContentJson = await dirContentResponse.json();
-      const dirData = await fetchRepoContents(dirContentJson, headers);
-      data.push({ path: item.path, content: dirData });
-    } else if (item.type === "file") {
-      data.push({ path: item.path, content: null });
-    }
-  }
-  return data;
-}
-
-async function fetchFileContent(url: string, headers: Headers): Promise<string> {
-  const response = await fetch(url, { headers });
-  return await response.text();
-}
-
-function shouldExclude(item: any): boolean {
-  const excludedPatterns = [
-    "node_modules",
-    "vendor",
-    ".lock",
-    "yarn.lock",
-    "package-lock.json",
-    ".git",
-    "dist",
-    "build",
-    ".zip",
-    ".tar",
-    ".gz"
-  ];
-  return excludedPatterns.some(pattern => item.path.includes(pattern));
-}

@@ -1,4 +1,3 @@
-
 openapi: 3.1.0
 info:
   title: GitHub Repo Fetcher API
@@ -20,7 +19,7 @@ paths:
           schema:
             type: string
       responses:
-        200:
+        "200":
           description: Successful operation
           content:
             application/json:
@@ -34,7 +33,7 @@ paths:
                     content:
                       type: string
                       nullable: true
-        400:
+        "400":
           description: Bad Request - Repository name is required
           content:
             application/json:
@@ -43,7 +42,7 @@ paths:
                 properties:
                   error:
                     type: string
-        500:
+        "500":
           description: Internal Server Error
           content:
             application/json:
