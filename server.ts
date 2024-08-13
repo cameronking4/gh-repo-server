@@ -17,7 +17,7 @@ async function fetchFileContent(url: string, headers: Headers): Promise<string> 
   const response = await fetch(url, { headers });
   const size = response.headers.get("Content-Length");
 
-  if (size && parseInt(size, 10) > 50000) { // Limit to 50KB
+  if (size && parseInt(size, 10) > 150000) { // Limit to 50KB
     return `File too large to fetch (${size} bytes)`;
   }
   
