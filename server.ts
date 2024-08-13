@@ -1,37 +1,42 @@
 import { Application, Router } from "https://deno.land/x/oak/mod.ts";
 
 const GITHUB_PAT = Deno.env.get("GITHUB_PAT");
-const CONCURRENCY_LIMIT = 5;
+const CONCURRENCY_LIMIT = 20; // Increased concurrency limit to 10
 
 // Function to check if an item should be excluded
 function shouldExclude(item: any): boolean {
   const excludedPatterns = [
-    "node_modules",
-    "vendor",
-    ".lock",
-    "yarn.lock",
-    "package-lock.json",
-    ".git",
-    "dist",
-    "build",
-    ".zip",
-    ".tar",
-    ".gz"
+    "node_modules", "vendor", ".lock", "yarn.lock", "package-lock.json", ".git",
+    "dist", "build", ".zip", ".tar", ".gz"
   ];
   return excludedPatterns.some(pattern => item.path.includes(pattern));
 }
 
-// Function to fetch file content
+// Function to fetch file content with streaming
 async function fetchFileContent(url: string, headers: Headers): Promise<string> {
   const response = await fetch(url, { headers });
   const size = response.headers.get("Content-Length");
+
   if (size && parseInt(size, 10) > 50000) { // Limit to 50KB
     return `File too large to fetch (${size} bytes)`;
   }
-  return await response.text();
+  
+  // Stream the content instead of loading it all at once
+  const reader = response.body?.getReader();
+  const decoder = new TextDecoder();
+  let result = '';
+  let done = false;
+
+  while (!done) {
+    const { value, done: doneReading } = await reader?.read()!;
+    done = doneReading;
+    result += decoder.decode(value, { stream: !done });
+  }
+
+  return result;
 }
 
-// Function to fetch repository contents
+// Function to fetch repository contents with streaming and batching
 async function fetchRepoContents(contents: any[], headers: Headers): Promise<any[]> {
   const data: any[] = [];
   const queue: Promise<any>[] = [];
@@ -45,17 +50,21 @@ async function fetchRepoContents(contents: any[], headers: Headers): Promise<any
     }
 
     const promise = (async () => {
-      if (item.type === "file" && !item.name.match(/\.(mp4|avi|mkv|jpg|jpeg|png|svg|gif|lock|ico)$/)) {
-        const fileContent = await fetchFileContent(item.download_url, headers);
-        data.push({ path: item.path, content: fileContent });
-      } else if (item.type === "dir") {
-        const dirContentUrl = item.url;
-        const dirContentResponse = await fetch(dirContentUrl, { headers });
-        const dirContentJson = await dirContentResponse.json();
-        const dirData = await fetchRepoContents(dirContentJson, headers);
-        data.push({ path: item.path, content: dirData });
-      } else if (item.type === "file") {
-        data.push({ path: item.path, content: null });
+      try {
+        if (item.type === "file" && !item.name.match(/\.(mp4|avi|mkv|jpg|jpeg|png|svg|gif|lock|ico)$/)) {
+          const fileContent = await fetchFileContent(item.download_url, headers);
+          data.push({ path: item.path, content: fileContent });
+        } else if (item.type === "dir") {
+          const dirContentUrl = item.url;
+          const dirContentResponse = await fetch(dirContentUrl, { headers });
+          const dirContentJson = await dirContentResponse.json();
+          const dirData = await fetchRepoContents(dirContentJson, headers);
+          data.push({ path: item.path, content: dirData });
+        } else if (item.type === "file") {
+          data.push({ path: item.path, content: null });
+        }
+      } catch (error) {
+        console.error(`Failed to process item ${item.path}:`, error);
       }
     })();
 
